@@ -1,10 +1,12 @@
 // ignore_for_file: use_build_context_synchronously
 
-import 'package:counter_app/color.dart';
-import 'package:counter_app/menu.dart';
+import 'package:counter_app/main.dart';
+import 'package:counter_app/models/colors.dart';
+import 'package:counter_app/pages/menu.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
 class CounterPage extends StatefulWidget {
   const CounterPage({super.key});
@@ -23,6 +25,8 @@ class _CounterPageState extends State<CounterPage> {
   // double? buttonSize;
 
   List dataList = [];
+  Color textIconColor = textIconColors[0];
+  int colorIndex = 0;
 
   @override
   void initState() {
@@ -41,6 +45,31 @@ class _CounterPageState extends State<CounterPage> {
       boxDB.put("buttonSize", 60);
       CounterPage.buttonSize = ValueNotifier(60);
     }
+    //Initiate Color Theme
+    if (boxDB.get("colorIndex") != null) {
+      colorIndex = boxDB.get("colorIndex"); //Change Theme for Provider
+      setState(() {
+        textIconColor = textIconColors[colorIndex];
+      });
+    } else {
+      boxDB.put("colorIndex", 0);
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Menggunakan context.read untuk mendapatkan instance ColorNotifier
+      Provider.of<ColorsNotifier>(context, listen: false)
+          .changeGeneralColor(colorIndex);
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    //   //Color from Provider
+    final colorNotifier = context.watch<ColorsNotifier>();
+    setState(() {
+      textIconColor = colorNotifier.textIconColor;
+    });
   }
 
   void _incrementCounter() {
@@ -68,7 +97,9 @@ class _CounterPageState extends State<CounterPage> {
 //Dialog Box Save
   void _dialogBoxSave() {
     Dialog errorDialog = Dialog(
-      // backgroundColor: backgroundColor,
+      backgroundColor: MyApp.themeNotifier.value == ThemeMode.dark
+          ? backgroundColor
+          : Colors.white,
       shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12.0)), //this right here
       child: SizedBox(
@@ -91,7 +122,7 @@ class _CounterPageState extends State<CounterPage> {
                 cursorColor: textIconColor,
                 style: TextStyle(color: textIconColor),
                 decoration: InputDecoration(
-                  // labelStyle: TextStyle(color: textIconColor),
+                  labelStyle: TextStyle(color: textIconColor),
                   enabledBorder: OutlineInputBorder(
                     borderSide: BorderSide(
                       color: textIconColor,

@@ -1,7 +1,9 @@
-import 'package:counter_app/color.dart';
-import 'package:counter_app/settings.dart';
+import 'package:counter_app/main.dart';
+import 'package:counter_app/models/colors.dart';
+import 'package:counter_app/pages/settings/settings.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
+import 'package:provider/provider.dart';
 
 class MenuPage extends StatefulWidget {
   const MenuPage({super.key});
@@ -14,6 +16,7 @@ class _MenuPageState extends State<MenuPage> {
   final boxDB = Hive.box("counterData"); //Call Box
 
   List dataList = [];
+  Color textIconColor = Colors.white;
 
   @override
   void initState() {
@@ -24,6 +27,16 @@ class _MenuPageState extends State<MenuPage> {
       boxDB.put("counterData", []);
     }
     // print(dataList);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    //   //Color from Provider
+    final colorNotifier = context.watch<ColorsNotifier>();
+    setState(() {
+      textIconColor = colorNotifier.textIconColor;
+    });
   }
 
   void deleteCounter(int index) async {
@@ -39,7 +52,9 @@ class _MenuPageState extends State<MenuPage> {
   //Dialog Delete Confirmation
   void _dialogBoxSave(int index) {
     Dialog errorDialog = Dialog(
-      // backgroundColor: backgroundColor,
+      backgroundColor: MyApp.themeNotifier.value == ThemeMode.dark
+          ? backgroundColor
+          : Colors.white,
       shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12.0)), //this right here
       child: SizedBox(
@@ -69,13 +84,14 @@ class _MenuPageState extends State<MenuPage> {
                       style: TextStyle(color: textIconColor, fontSize: 18.0),
                     )),
                 TextButton(
-                    onPressed: () {
-                      deleteCounter(index);
-                    },
-                    child: Text(
-                      'Yes!',
-                      style: TextStyle(color: textIconColor, fontSize: 18.0),
-                    )),
+                  onPressed: () {
+                    deleteCounter(index);
+                  },
+                  child: Text(
+                    'Yes!',
+                    style: TextStyle(color: textIconColor, fontSize: 18.0),
+                  ),
+                ),
               ],
             )
           ],
@@ -90,6 +106,8 @@ class _MenuPageState extends State<MenuPage> {
 
   @override
   Widget build(BuildContext context) {
+    //Color from Provider
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
