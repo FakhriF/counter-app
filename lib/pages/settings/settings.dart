@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:counter_app/models/colors.dart';
 
 import 'package:counter_app/main.dart';
@@ -8,6 +11,7 @@ import 'package:counter_app/widgets/basic_dialog_box.dart';
 import 'package:counter_app/widgets/settings_list.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 
 class SettingPage extends StatefulWidget {
@@ -82,22 +86,58 @@ class _SettingPageState extends State<SettingPage> {
               ),
             ),
             SettingListTile(
-              icons: Icons.help_center_rounded,
-              title: "Help",
-              tapAction: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: ((context) => const HelpPage()),
-                ),
-              ),
+              icons: Icons.download_rounded,
+              title: "Export Data",
+              tapAction: () async {
+                final dir = await getExternalStorageDirectory();
+                final path = dir!.path;
+
+                List dataList = [];
+
+                if (boxDB.get("counterData") != null) {
+                  dataList = boxDB.get("counterData"); //Read All Data in BoxDB
+                } else {
+                  boxDB.put("counterData", []);
+                }
+
+                // convert dataLIst to Json with map name with name, counter with counter, dateCreated with date
+                dataList = dataList.map((e) {
+                  return {
+                    "name": e[0],
+                    "counter": e[1],
+                    "dateCreated": e[2],
+                  };
+                }).toList();
+
+                final jsonFile = File("$path/counterData.json");
+                jsonFile.writeAsString(dataList.join(","));
+
+                final txtFile = File("$path/counterData.txt");
+                txtFile.writeAsString(dataList.join("\n"));
+
+                showDialog(
+                    context: context,
+                    builder: (BuildContext context) =>
+                        BasicDialogBox(text: "Data Exported to $path"));
+              },
             ),
+            // SettingListTile(
+            //   icons: Icons.help_center_rounded,
+            //   title: "Help",
+            //   tapAction: () => Navigator.push(
+            //     context,
+            //     MaterialPageRoute(
+            //       builder: ((context) => const HelpPage()),
+            //     ),
+            //   ),
+            // ),
             SettingListTile(
               icons: Icons.info_rounded,
               title: "App Info",
               tapAction: () => showDialog(
                   context: context,
                   builder: (BuildContext context) =>
-                      BasicDialogBox(text: "Counter App Ver 1.0.4 ")),
+                      BasicDialogBox(text: "Counter App Ver 1.1")),
             ),
           ],
         ),
